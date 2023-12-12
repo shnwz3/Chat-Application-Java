@@ -1,0 +1,328 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.net.URL;
+import javax.swing.ImageIcon;
+
+public class ChatApplication {
+    private JFrame mainFrame;
+    private JPanel loginPanel;
+    private List<JFrame> chatWindows;
+    private List<JTextArea> chatTextAreas;
+    private List<JTextField> messageFields;
+    private String yourName; // Store the authenticated user's name
+    private UserAccountManager userAccountManager;
+
+    public ChatApplication() {
+        mainFrame = new JFrame("Chat Application");
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        mainFrame.setSize(380, 640); // Mobile-sized dimensions
+        mainFrame.setLayout(new BorderLayout());
+
+        // Create a logo panel with your logo image
+        JPanel logoPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                URL logoURL = getClass().getResource("logo.png");
+
+                if (logoURL != null) {
+                    ImageIcon logoIcon = new ImageIcon(logoURL);
+                    g.drawImage(logoIcon.getImage(), 500, 100, 500, 300, this);
+                }
+            }
+        };
+
+        // Set the background color to gray
+        logoPanel.setBackground(Color.black);
+
+        mainFrame.add(logoPanel, BorderLayout.NORTH);
+
+        // Create labels and text fields for username and password
+
+        JLabel titleLabel = new JLabel("Login");
+        titleLabel.setFont(new Font("Tahoma", Font.PLAIN, 26));
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JLabel usernameLabel = new JLabel("Username:");
+        usernameLabel.setFont(new Font("Tahoma", Font.PLAIN, 16));
+        JTextField usernameField = new JTextField(20); // Increased the width
+        usernameField.setFont(new Font("Tahoma", Font.PLAIN, 16));
+
+        JLabel passwordLabel = new JLabel("Password:");
+        passwordLabel.setFont(new Font("Tahoma", Font.PLAIN, 16));
+        JPasswordField passwordField = new JPasswordField(20); // Increased the width
+        passwordField.setFont(new Font("Tahoma", Font.PLAIN, 16));
+
+        JButton loginButton = new JButton("Login");
+
+        // Create a panel for login components using GridBagLayout
+        loginPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.insets = new Insets(5, 5, 5, 5);
+        constraints.anchor = GridBagConstraints.CENTER;
+
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.gridwidth = 2;
+        loginPanel.add(titleLabel, constraints);
+
+        constraints.gridy = 1;
+        constraints.gridwidth = 1;
+        loginPanel.add(usernameLabel, constraints);
+
+        constraints.gridx = 1;
+        loginPanel.add(usernameField, constraints);
+
+        constraints.gridx = 0;
+        constraints.gridy = 2;
+        loginPanel.add(passwordLabel, constraints);
+
+        constraints.gridx = 1;
+        loginPanel.add(passwordField, constraints);
+
+        constraints.gridx = 0;
+        constraints.gridy = 3;
+        constraints.gridwidth = 2;
+        loginPanel.add(loginButton, constraints);
+
+        // Set the login button action
+        loginButton.addActionListener(e -> {
+            // Authenticate the user using the UserAccountManager
+            String username = usernameField.getText();
+            char[] password = passwordField.getPassword();
+            if (userAccountManager.authenticateUser(username, String.valueOf(password))) {
+                yourName = username; // Set the authenticated user's name
+                createChatOptions();
+            } else {
+                JOptionPane.showMessageDialog(mainFrame, "Authentication failed. Please try again.");
+            }
+        });
+
+        mainFrame.add(loginPanel, BorderLayout.CENTER);
+
+        userAccountManager = new UserAccountManager(); // Initialize UserAccountManager
+
+        mainFrame.setVisible(true);
+    }
+
+    private void createChatOptions() {
+        mainFrame.getContentPane().removeAll(); // Clear the login components
+
+        JButton personalChatButton = new JButton("Personal Chat");
+        personalChatButton.addActionListener(e -> createPersonalChatWindow());
+        personalChatButton.setBackground(new Color(0, 150, 136)); // WhatsApp green color
+        personalChatButton.setForeground(Color.WHITE); // White text color
+
+        JButton groupChatButton = new JButton("Group Chat");
+        groupChatButton.addActionListener(e -> createGroupChatWindow());
+        groupChatButton.setBackground(new Color(0, 150, 136)); // WhatsApp green color
+        groupChatButton.setForeground(Color.WHITE); // White text color
+
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel.add(personalChatButton);
+        buttonPanel.add(groupChatButton);
+
+        // Set the background color to gray
+        buttonPanel.setBackground(Color.GRAY);
+
+        mainFrame.add(buttonPanel, BorderLayout.SOUTH);
+
+        mainFrame.setVisible(true);
+    }
+
+    private void createPersonalChatWindow() {
+        mainFrame.setVisible(false);
+        chatWindows = new ArrayList<>();
+        chatTextAreas = new ArrayList<>();
+        messageFields = new ArrayList<>();
+
+        JFrame youChatWindow = createChatWindow(yourName, "Friend", "profile_you.png");
+        chatWindows.add(youChatWindow);
+
+        JFrame friendChatWindow = createChatWindow("Friend", yourName, "profile_friend.png");
+        chatWindows.add(friendChatWindow);
+    }
+
+    private void createGroupChatWindow() {
+        mainFrame.setVisible(false);
+
+        int numFriends = Integer.parseInt(JOptionPane.showInputDialog("Enter the number of friends:"));
+        chatWindows = new ArrayList<>();
+        chatTextAreas = new ArrayList<>();
+        messageFields = new ArrayList<>();
+
+        JFrame youChatWindow = createChatWindow(yourName, "Friend", "profile_you.png"); // Use "profile_you.png" here
+        chatWindows.add(youChatWindow);
+
+        for (int i = 1; i <= numFriends; i++) {
+            JFrame friendChatWindow = createChatWindow("Friend " + i, yourName, "group_profile.png");
+            chatWindows.add(friendChatWindow);
+        }
+    }
+
+    private JFrame createChatWindow(String title, String friendTitle, String profileFileName) {
+        JFrame chatWindow = new JFrame(title);
+        chatWindow.setSize(360, 640); // Mobile-sized dimensions
+        chatWindow.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        chatWindow.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                closeAllWindows();
+            }
+        });
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setPreferredSize(new Dimension(360, 50)); // Adjusted the width
+        topPanel.setBackground(new Color(0, 150, 136)); // WhatsApp green color
+
+        JPanel avatarPanel = new JPanel();
+        avatarPanel.setPreferredSize(new Dimension(50, 50));
+
+        // Set the profile based on the profileFileName
+        URL avatarURL = getClass().getResource("resources/" + profileFileName);
+        if (avatarURL != null) {
+            ImageIcon avatarIcon = new ImageIcon(avatarURL);
+            Image avatarImage = avatarIcon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+            avatarIcon = new ImageIcon(avatarImage);
+            JLabel avatarLabel = new JLabel(avatarIcon);
+            avatarPanel.add(avatarLabel);
+        }
+
+        JLabel nameLabel = new JLabel(title);
+        nameLabel.setForeground(Color.WHITE); // White text color
+
+        JButton moreButton = new JButton(":");
+        moreButton.addActionListener(e -> {
+            JPopupMenu optionsMenu = createOptionsMenu(chatWindow);
+            optionsMenu.show(moreButton, moreButton.getWidth(), moreButton.getHeight());
+        });
+        moreButton.setForeground(Color.black);
+
+        topPanel.add(avatarPanel, BorderLayout.WEST);
+        topPanel.add(nameLabel, BorderLayout.CENTER);
+        topPanel.add(moreButton, BorderLayout.EAST);
+
+        chatWindow.add(topPanel, BorderLayout.NORTH);
+
+        JTextArea chatTextArea = new JTextArea();
+        chatTextArea.setEditable(false);
+        chatTextArea.setFont(new Font("Tahoma", Font.PLAIN, 16));
+        chatTextArea.setBackground(Color.WHITE); // White background
+        chatTextArea.setLineWrap(true);
+        chatTextArea.setWrapStyleWord(true);
+
+        JScrollPane chatScrollPane = new JScrollPane(chatTextArea);
+        chatWindow.add(chatScrollPane, BorderLayout.CENTER);
+
+        JTextField messageField = new JTextField("Message..");
+        messageField.setForeground(Color.GRAY);
+        messageField.setFont(new Font("Tahoma", Font.PLAIN, 16));
+        messageField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (messageField.getText().equals("Message..")) {
+                    messageField.setText("");
+                    messageField.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (messageField.getText().isEmpty()) {
+                    messageField.setText("Message..");
+                    messageField.setForeground(Color.GRAY);
+                }
+            }
+        });
+
+        JButton sendButton = new JButton("Send");
+        sendButton.setBackground(new Color(0, 150, 136)); // WhatsApp green color
+        sendButton.setForeground(Color.WHITE); // White text color
+
+        JPanel inputPanel = new JPanel(new BorderLayout());
+        inputPanel.add(messageField, BorderLayout.CENTER);
+        inputPanel.add(sendButton, BorderLayout.EAST);
+        chatWindow.add(inputPanel, BorderLayout.SOUTH);
+
+        sendButton.addActionListener(e -> {
+            String message = messageField.getText();
+            if (!message.isEmpty() && !message.equals("Message..")) {
+                String sender = title;
+                int index = chatWindows.indexOf(chatWindow);
+
+                chatTextAreas.get(index).append(sender + ": " + message + "\n");
+
+                for (int i = 0; i < chatTextAreas.size(); i++) {
+                    if (i != index) {
+                        chatTextAreas.get(i).append(sender + ": " + message + "\n");
+                    }
+                }
+
+                messageField.setText("Message..");
+                messageField.setForeground(Color.GRAY);
+            }
+        });
+
+        chatTextAreas.add(chatTextArea);
+        messageFields.add(messageField);
+
+        chatWindow.setVisible(true);
+        return chatWindow;
+    }
+
+    private JPopupMenu createOptionsMenu(JFrame chatWindow) {
+        JPopupMenu optionsMenu = new JPopupMenu();
+
+        JMenuItem signOutItem = new JMenuItem("Sign Out");
+        signOutItem.addActionListener(e -> signOut());
+        optionsMenu.add(signOutItem);
+
+        JMenuItem clearChatItem = new JMenuItem("Clear Chat");
+        clearChatItem.addActionListener(e -> clearChatText(chatWindow));
+        optionsMenu.add(clearChatItem);
+
+        return optionsMenu;
+    }
+
+    private void clearChatText(JFrame chatWindow) {
+        int index = chatWindows.indexOf(chatWindow);
+        JTextArea chatTextArea = chatTextAreas.get(index);
+        chatTextArea.setText("");
+    }
+
+    private void signOut() {
+        if (chatWindows != null) {
+            for (JFrame window : chatWindows) {
+                window.dispose();
+            }
+        }
+
+        chatWindows.clear();
+        chatTextAreas.clear();
+        messageFields.clear();
+
+        yourName = null;
+
+        mainFrame.getContentPane().removeAll();
+        mainFrame.add(loginPanel);
+        mainFrame.setVisible(true);
+    }
+
+    private void closeAllWindows() {
+        if (chatWindows != null) {
+            for (JFrame window : chatWindows) {
+                window.dispose();
+            }
+        }
+
+        System.exit(0);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new ChatApplication());
+    }
+}
