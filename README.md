@@ -13,9 +13,8 @@ This code serves as a starting point for a simple chat application and can be ex
 </p>
 <h4>Personal Chat</h4>
 
-![311460059-143e058d-344b-430a-9b6d-f78081b2266e](https://github.com/user-attachments/assets/aeda6dff-7693-4929-b9a1-30a200616fd2)
+![311459927-5a7c0bd6-1775-4baf-8f1f-06855f52992c](https://github.com/user-attachments/assets/5df75610-9cf4-4cdc-9523-4fecc6fa815a)
 
 <h4>Group chat</h4>
 
-![311459927-5a7c0bd6-1775-4baf-8f1f-06855f52992c](https://github.com/user-attachments/assets/5df75610-9cf4-4cdc-9523-4fecc6fa815a)
-
+![311460059-143e058d-344b-430a-9b6d-f78081b2266e](https://github.com/user-attachments/assets/aeda6dff-7693-4929-b9a1-30a200616fd2)
